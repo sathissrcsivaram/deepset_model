@@ -12,13 +12,10 @@ class DeepSetsHeatmap(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 128),
-            nn.LayerNorm(128),
             nn.GELU(),
             nn.Linear(128, 128),
-            nn.LayerNorm(128),
             nn.GELU(),
             nn.Linear(128, embed_dim),
-            nn.LayerNorm(embed_dim),
             nn.GELU(),
         )
 
@@ -42,4 +39,3 @@ class DeepSetsHeatmap(nn.Module):
         x_logits = self.x_head(hidden)
         y_logits = self.y_head(hidden)
         return y_logits.unsqueeze(2) + x_logits.unsqueeze(1)
-
