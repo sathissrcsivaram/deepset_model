@@ -1,7 +1,7 @@
 [project]
 name = "baseline-deepsets"
 version = "0.1.0"
-description = "Standalone baseline DeepSets heatmap model and event generator"
+description = "Standalone baseline DeepSets model for heatmap source localization with synthetic event generation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -10,4 +10,3 @@ dependencies = [
     "pandas>=3.0.1",
     "torch>=2.10.0",
 ]
-
