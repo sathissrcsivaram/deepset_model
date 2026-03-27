@@ -88,99 +88,6 @@ def save_xy_residual_histograms(prediction_rows, output_dir: Path):
     plt.close(fig)
 
 
-def save_spatial_error_heatmap(prediction_rows, output_dir: Path):
-    true_x = to_int_array(prediction_rows, "true_x")
-    true_y = to_int_array(prediction_rows, "true_y")
-    distances = to_float_array(prediction_rows, "distance")
-
-    grid_size = max(int(true_x.max()), int(true_y.max())) + 1
-    error_sum = np.zeros((grid_size, grid_size), dtype=np.float32)
-    counts = np.zeros((grid_size, grid_size), dtype=np.float32)
-
-    for x, y, distance in zip(true_x, true_y, distances):
-        error_sum[y, x] += distance
-        counts[y, x] += 1.0
-
-    mean_error = np.divide(
-        error_sum,
-        counts,
-        out=np.full_like(error_sum, np.nan),
-        where=counts > 0,
-    )
-
-    plt.figure(figsize=(7, 6))
-    image = plt.imshow(mean_error, origin="lower", cmap="magma")
-    plt.colorbar(image, label="Mean Distance Error (pixels)")
-    plt.xlabel("True X")
-    plt.ylabel("True Y")
-    plt.title("Spatial Heatmap of Mean Localization Error")
-    plt.tight_layout()
-    plt.savefig(output_dir / "spatial_error_heatmap.png", dpi=150)
-    plt.close()
-
-
-def save_prediction_mean_std_plot(metrics_rows, output_dir: Path):
-    epochs = to_int_array(metrics_rows, "epoch")
-    train_pred_mean = to_float_array(metrics_rows, "train_pred_mean")
-    val_pred_mean = to_float_array(metrics_rows, "val_pred_mean")
-    train_pred_std = to_float_array(metrics_rows, "train_pred_std")
-    val_pred_std = to_float_array(metrics_rows, "val_pred_std")
-
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-
-    axes[0].plot(epochs, train_pred_mean, label="Train Pred Mean", color="#4C78A8", linewidth=2)
-    axes[0].plot(epochs, val_pred_mean, label="Val Pred Mean", color="#F58518", linewidth=2)
-    axes[0].set_title("Prediction Mean by Epoch")
-    axes[0].set_xlabel("Epoch")
-    axes[0].set_ylabel("Mean Predicted Heatmap Value")
-    axes[0].grid(True, alpha=0.25)
-    axes[0].legend()
-
-    axes[1].plot(epochs, train_pred_std, label="Train Pred Std", color="#54A24B", linewidth=2)
-    axes[1].plot(epochs, val_pred_std, label="Val Pred Std", color="#E45756", linewidth=2)
-    axes[1].set_title("Prediction Std by Epoch")
-    axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Std of Predicted Heatmap Values")
-    axes[1].grid(True, alpha=0.25)
-    axes[1].legend()
-
-    fig.suptitle("Prediction Mean and Std Across Training")
-    fig.tight_layout()
-    fig.savefig(output_dir / "prediction_mean_std_by_epoch.png", dpi=150)
-    plt.close(fig)
-
-
-def save_accuracy_distance_plot(metrics_rows, output_dir: Path):
-    epochs = to_int_array(metrics_rows, "epoch")
-    train_accuracy = to_float_array(metrics_rows, "train_accuracy")
-    val_accuracy = to_float_array(metrics_rows, "validation_accuracy")
-    train_mean_dist = to_float_array(metrics_rows, "train_mean_dist")
-    val_mean_dist = to_float_array(metrics_rows, "val_mean_dist")
-
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-
-    axes[0].plot(epochs, train_accuracy, label="Train Accuracy", color="#4C78A8", linewidth=2)
-    axes[0].plot(epochs, val_accuracy, label="Val Accuracy", color="#F58518", linewidth=2)
-    axes[0].set_title("Exact-Match Accuracy by Epoch")
-    axes[0].set_xlabel("Epoch")
-    axes[0].set_ylabel("Accuracy")
-    axes[0].grid(True, alpha=0.25)
-    axes[0].legend()
-
-    axes[1].plot(epochs, train_mean_dist, label="Train Mean Distance", color="#54A24B", linewidth=2)
-    axes[1].plot(epochs, val_mean_dist, label="Val Mean Distance", color="#E45756", linewidth=2)
-    axes[1].set_title("Mean Distance Error by Epoch")
-    axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Mean Distance Error (pixels)")
-    axes[1].grid(True, alpha=0.25)
-    axes[1].legend()
-
-    fig.suptitle("Accuracy and Distance Across Training")
-    fig.tight_layout()
-    fig.savefig(output_dir / "accuracy_distance_by_epoch.png", dpi=150)
-    plt.close(fig)
-
-
 def save_error_mean_std_plot(prediction_rows, output_dir: Path):
     x_errors = to_float_array(prediction_rows, "x_error")
     y_errors = to_float_array(prediction_rows, "y_error")
@@ -215,14 +122,10 @@ def main():
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    metrics_rows = read_csv_rows(args.metrics_csv)
     prediction_rows = read_csv_rows(args.predictions_csv)
 
     save_distance_histogram(prediction_rows, args.output_dir)
     save_xy_residual_histograms(prediction_rows, args.output_dir)
-    save_spatial_error_heatmap(prediction_rows, args.output_dir)
-    save_prediction_mean_std_plot(metrics_rows, args.output_dir)
-    save_accuracy_distance_plot(metrics_rows, args.output_dir)
     save_error_mean_std_plot(prediction_rows, args.output_dir)
 
     print(f"Saved plots to {args.output_dir}")

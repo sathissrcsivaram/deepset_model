@@ -26,12 +26,8 @@ from baseline_deepsets.heatmap import heatmap_to_xy
 from baseline_deepsets.metrics import benchmark_inference_ms, count_parameters, summarize_prediction_records
 from baseline_deepsets.model import DeepSetsHeatmap
 from baseline_deepsets.report_plots import (
-    read_csv_rows,
-    save_accuracy_distance_plot,
     save_distance_histogram,
     save_error_mean_std_plot,
-    save_prediction_mean_std_plot,
-    save_spatial_error_heatmap,
     save_xy_residual_histograms,
 )
 
@@ -116,14 +112,16 @@ def test_dataset_sample(test_loader):
 
 
 def generate_report_plots(results_dir: Path):
-    metrics_rows = read_csv_rows(results_dir / f"{MODEL_NAME}_train_metrics.csv")
-    prediction_rows = read_csv_rows(results_dir / "predictions.csv")
+    prediction_rows = list(prediction_rows_from_csv(results_dir / "predictions.csv"))
     save_distance_histogram(prediction_rows, results_dir)
     save_xy_residual_histograms(prediction_rows, results_dir)
-    save_spatial_error_heatmap(prediction_rows, results_dir)
-    save_prediction_mean_std_plot(metrics_rows, results_dir)
-    save_accuracy_distance_plot(metrics_rows, results_dir)
     save_error_mean_std_plot(prediction_rows, results_dir)
+
+
+def prediction_rows_from_csv(path: Path):
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        yield from reader
 
 
 def main():
