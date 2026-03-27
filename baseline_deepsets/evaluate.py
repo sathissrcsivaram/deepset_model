@@ -25,6 +25,15 @@ from baseline_deepsets.data import EventHeatmapDataset, split_files
 from baseline_deepsets.heatmap import heatmap_to_xy
 from baseline_deepsets.metrics import benchmark_inference_ms, count_parameters, summarize_prediction_records
 from baseline_deepsets.model import DeepSetsHeatmap
+from baseline_deepsets.report_plots import (
+    read_csv_rows,
+    save_accuracy_distance_plot,
+    save_distance_histogram,
+    save_error_mean_std_plot,
+    save_prediction_mean_std_plot,
+    save_spatial_error_heatmap,
+    save_xy_residual_histograms,
+)
 
 
 def set_seed(seed=42):
@@ -57,6 +66,11 @@ def parse_args():
         default=8,
         help="Number of prediction examples to print and save when --print-all is not set.",
     )
+    parser.add_argument(
+        "--skip-report-plots",
+        action="store_true",
+        help="Skip generating summary report plots from the saved metrics and prediction CSV files.",
+    )
     return parser.parse_args()
 
 
@@ -73,7 +87,7 @@ def save_preview_image(output_dir, index, pred_map, target_map, px, py, tx, ty):
     plt.colorbar()
 
     plt.tight_layout()
-    save_path = output_dir / f"result_{index}.png"
+    save_path = output_dir / f"true_vs_predicted_heatmap_{index}.png"
     plt.savefig(save_path)
     plt.close()
 
@@ -99,6 +113,17 @@ def print_summary(summary):
 def test_dataset_sample(test_loader):
     events, _ = next(iter(test_loader))
     return events[:1]
+
+
+def generate_report_plots(results_dir: Path):
+    metrics_rows = read_csv_rows(results_dir / f"{MODEL_NAME}_train_metrics.csv")
+    prediction_rows = read_csv_rows(results_dir / "predictions.csv")
+    save_distance_histogram(prediction_rows, results_dir)
+    save_xy_residual_histograms(prediction_rows, results_dir)
+    save_spatial_error_heatmap(prediction_rows, results_dir)
+    save_prediction_mean_std_plot(metrics_rows, results_dir)
+    save_accuracy_distance_plot(metrics_rows, results_dir)
+    save_error_mean_std_plot(prediction_rows, results_dir)
 
 
 def main():
@@ -182,6 +207,9 @@ def main():
     summary["parameter_count"] = parameter_count
     print_summary(summary)
     print(f"\nSaved predictions CSV: {prediction_csv}")
+    if not args.skip_report_plots:
+        generate_report_plots(RESULTS_DIR)
+        print(f"Saved summary plots under: {RESULTS_DIR}")
 
 
 if __name__ == "__main__":
